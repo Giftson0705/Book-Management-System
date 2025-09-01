@@ -8,7 +8,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from passlib.context import CryptContext
 
 # Import routers
-from routers import auth, books, admin_books, admin_users
+from app.routers import auth, books, admin_books, admin_users
+
 
 # Environment Configuration
 SECRET_KEY = os.getenv("SECRET_KEY", "your-super-secret-key-change-in-production")

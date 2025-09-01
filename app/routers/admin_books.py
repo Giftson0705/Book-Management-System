@@ -4,8 +4,8 @@ from typing import Dict
 from fastapi import APIRouter, HTTPException, Depends, status
 from bson import ObjectId
 from datetime import datetime
-from schemas import BookCreate, BookUpdate
-from middleware.auth_middleware import get_current_admin
+from app.schemas import BookCreate, BookUpdate
+from app.middleware.auth_middleware import get_current_admin
 
 router = APIRouter()
 

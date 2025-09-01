@@ -4,7 +4,7 @@ from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, status
 from bson import ObjectId
 from datetime import datetime
-from middleware.auth_middleware import get_current_admin, user_helper
+from app.middleware.auth_middleware import get_current_admin, user_helper
 
 router = APIRouter()
 

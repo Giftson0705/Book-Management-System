@@ -3,8 +3,8 @@
 from datetime import timedelta, datetime
 from typing import Dict
 from fastapi import APIRouter, HTTPException, status
-from schemas import UserCreate, UserLogin, Token
-from middleware.auth_middleware import get_password_hash, authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.schemas import UserCreate, Token, UserLogin
+from app.middleware.auth_middleware import get_password_hash, authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter()
 
