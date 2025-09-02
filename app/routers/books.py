@@ -4,7 +4,6 @@ from app.dependencies import get_database
 from typing import Dict, Any, List
 from bson import ObjectId
 from fastapi import Query
-
 router = APIRouter()
 
 @router.get("/books")

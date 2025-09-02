@@ -16,15 +16,15 @@ app = FastAPI(
     description="A complete book management system with user authentication and role-based access",
     version="1.0.0"
 )
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:3000"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(books.router, prefix="/api/v1", tags=["Books - User"])
 app.include_router(admin_books.router, prefix="/api/v1/admin", tags=["Books - Admin"])
@@ -33,6 +33,26 @@ app.include_router(admin_users.router, prefix="/api/v1/admin", tags=["Users - Ad
 client = AsyncIOMotorClient(MONGODB_URL)
 database = client[DATABASE_NAME]
 app.state.database = database
+
+@app.get("/")
+async def root():
+    return {
+        "message": "Welcome to Book Management System API",
+        "version": "1.0.0",
+        "endpoints": {
+            "docs": "/docs",
+            "health": "/api/v1/health",
+            "auth": "/api/v1/auth",
+            "books": "/api/v1/books",
+            "admin": "/api/v1/admin"
+        },
+        "default_admin": {
+            "username": "admin",
+            "password": "admin123",
+            "note": "Please change password after first login"
+        }
+    }
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -89,30 +109,11 @@ async def health_check():
         "version": "1.0.0"
     }
 
-@app.get("/")
-async def root():
-    return {
-        "message": "Welcome to Book Management System API",
-        "version": "1.0.0",
-        "endpoints": {
-            "docs": "/docs",
-            "health": "/api/v1/health",
-            "auth": "/api/v1/auth",
-            "books": "/api/v1/books",
-            "admin": "/api/v1/admin"
-        },
-        "default_admin": {
-            "username": "admin",
-            "password": "admin123",
-            "note": "Please change password after first login"
-        }
-    }
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=60619,
         reload=True
     )
