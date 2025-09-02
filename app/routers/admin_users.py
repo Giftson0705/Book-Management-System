@@ -5,12 +5,12 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from bson import ObjectId
 from datetime import datetime
 from app.middleware.auth_middleware import get_current_admin, user_helper
+from app.main import app
 
 router = APIRouter()
 
 @router.get("/users", response_model=List[Dict[str, Any]])
 async def get_all_users(current_admin: dict = Depends(get_current_admin)):
-    from main import app
     
     database = app.state.database
     users_collection = database.users
@@ -22,7 +22,6 @@ async def get_all_users(current_admin: dict = Depends(get_current_admin)):
 
 @router.get("/users/{user_id}", response_model=Dict[str, Any])
 async def get_user_by_id(user_id: str, current_admin: dict = Depends(get_current_admin)):
-    from main import app
     
     database = app.state.database
     users_collection = database.users
@@ -42,7 +41,6 @@ async def update_user_role(
     role_update: Dict[str, str], 
     current_admin: dict = Depends(get_current_admin)
 ):
-    from main import app
     
     database = app.state.database
     users_collection = database.users
@@ -81,7 +79,6 @@ async def update_user_role(
 
 @router.delete("/users/{user_id}", response_model=Dict[str, str])
 async def delete_user(user_id: str, current_admin: dict = Depends(get_current_admin)):
-    from main import app
     
     database = app.state.database
     users_collection = database.users

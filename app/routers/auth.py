@@ -5,12 +5,12 @@ from typing import Dict
 from fastapi import APIRouter, HTTPException, status
 from app.schemas import UserCreate, Token, UserLogin
 from app.middleware.auth_middleware import get_password_hash, authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.main import app
 
 router = APIRouter()
 
 @router.post("/signup", response_model=Dict[str, str])
 async def signup(user: UserCreate):
-    from main import app
     
     database = app.state.database
     users_collection = database.users
@@ -53,7 +53,7 @@ async def signup(user: UserCreate):
 
 @router.post("/login", response_model=Token)
 async def login(user_credentials: UserLogin):
-    from main import app
+
     
     database = app.state.database
     

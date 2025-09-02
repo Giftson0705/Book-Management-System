@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Management System</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Spinner -->
+    <div id="loading" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-book"></i>
+                <span>BookStore</span>
+            </div>
+            <div class="nav-links" id="navLinks">
+                <a href="#" onclick="showSection('dashboard')" class="nav-link active">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="#" onclick="showSection('books')" class="nav-link">
+                    <i class="fas fa-book-open"></i> Books
+                </a>
+                <a href="#" onclick="showSection('mybooks')" class="nav-link" id="myBooksLink">
+                    <i class="fas fa-bookmark"></i> My Books
+                </a>
+                <a href="#" onclick="showSection('admin')" class="nav-link" id="adminLink" style="display: none;">
+                    <i class="fas fa-cog"></i> Admin
+                </a>
+            </div>
+            <div class="nav-user">
+                <span id="userGreeting">Welcome!</span>
+                <button onclick="logout()" class="btn btn-outline">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login/Register Section -->
+    <section id="auth" class="auth-section">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <h2 id="authTitle">Welcome</h2>
+                    <p>book management system</p>
+                </div>
+                
+                <!-- Login Form -->
+                <form id="loginForm" class="auth-form">
+                    <h3>Login</h3>
+                    <div class="form-group">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="loginUsername" placeholder="Username" required>
+                    </div>
+                    <div class="form-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="loginPassword" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                    <p class="auth-switch">
+                        Don't have an account? 
+                        <a href="#" onclick="toggleAuth()">Sign up</a>
+                    </p>
+                    <div class="demo-credentials">
+                        <strong>Demo Credentials:</strong><br>
+                        Admin: admin / admin123<br>
+                        User: Create new account
+                    </div>
+                </form>
+
+                <!-- Register Form -->
+                <form id="registerForm" class="auth-form" style="display: none;">
+                    <h3>Create Account</h3>
+                    <div class="form-group">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="regUsername" placeholder="Username" required>
+                    </div>
+                    <div class="form-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="regEmail" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <i class="fas fa-id-card"></i>
+                        <input type="text" id="regFullName" placeholder="Full Name" required>
+                    </div>
+                    <div class="form-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="regPassword" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Register</button>
+                    <p class="auth-switch">
+                        Already have an account? 
+                        <a href="#" onclick="toggleAuth()">Login</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main id="mainContent" style="display: none;">
+        
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="content-section active">
+            <div class="container">
+                <div class="page-header">
+                    <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+                    <p>Welcome to your book management dashboard</p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalBooks">0</h3>
+                            <p>Total Books</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-bookmark"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="borrowedBooks">0</h3>
+                            <p>Books Borrowed</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="availableBooks">0</h3>
+                            <p>Available Books</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" id="adminStats" style="display: none;">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalUsers">0</h3>
+                            <p>Total Users</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <h2>Quick Actions</h2>
+                    <div class="action-buttons">
+                        <button onclick="showSection('books')" class="action-btn">
+                            <i class="fas fa-search"></i>
+                            Browse Books
+                        </button>
+                        <button onclick="showSection('mybooks')" class="action-btn">
+                            <i class="fas fa-list"></i>
+                            My Borrowed Books
+                        </button>
+                        <button onclick="showAddBookModal()" class="action-btn" id="addBookBtn" style="display: none;">
+                            <i class="fas fa-plus"></i>
+                            Add New Book
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Books Section -->
+        <section id="books" class="content-section">
+            <div class="container">
+                <div class="page-header">
+                    <h1><i class="fas fa-book-open"></i> All Books</h1>
+                    <div class="search-container">
+                        <input type="text" id="searchInput" placeholder="Search books by title, author, or genre...">
+                        <button onclick="searchBooks()" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="books-grid" id="booksGrid">
+                    <!-- Books will be loaded here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- My Books Section -->
+        <section id="mybooks" class="content-section">
+            <div class="container">
+                <div class="page-header">
+                    <h1><i class="fas fa-bookmark"></i> My Borrowed Books</h1>
+                    <p>Books currently borrowed by you</p>
+                </div>
+                
+                <div class="books-grid" id="myBooksGrid">
+                    <!-- My books will be loaded here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin Section -->
+        <section id="admin" class="content-section">
+            <div class="container">
+                <div class="page-header">
+                    <h1><i class="fas fa-cog"></i> Admin Panel</h1>
+                    <div class="admin-actions">
+                        <button onclick="showAddBookModal()" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Book
+                        </button>
+                        <button onclick="loadUsers()" class="btn btn-secondary">
+                            <i class="fas fa-users"></i> Manage Users
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Admin Tabs -->
+                <div class="tab-container">
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" onclick="showAdminTab('books')">Books</button>
+                        <button class="tab-btn" onclick="showAdminTab('users')">Users</button>
+                    </div>
+
+                    <!-- Admin Books Tab -->
+                    <div id="adminBooksTab" class="tab-content active">
+                        <div class="admin-books-grid" id="adminBooksGrid">
+                            <!-- Admin books management -->
+                        </div>
+                    </div>
+
+                    <!-- Admin Users Tab -->
+                    <div id="adminUsersTab" class="tab-content">
+                        <div class="users-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Email</th>
+                                        <th>Full Name</th>
+                                        <th>Role</th>
+                                        <th>Borrowed Books</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <!-- Users will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Add/Edit Book Modal -->
+    <div id="bookModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Book</h2>
+                <span class="close" onclick="closeModal('bookModal')">&times;</span>
+            </div>
+            <form id="bookForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bookTitle">Title</label>
+                        <input type="text" id="bookTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bookAuthor">Author</label>
+                        <input type="text" id="bookAuthor" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bookGenre">Genre</label>
+                        <input type="text" id="bookGenre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bookISBN">ISBN</label>
+                        <input type="text" id="bookISBN" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="bookDescription">Description</label>
+                    <textarea id="bookDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="totalCopies">Total Copies</label>
+                    <input type="number" id="totalCopies" min="1" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" onclick="closeModal('bookModal')" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Book</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Alert/Notification System -->
+    <div id="alertContainer" class="alert-container"></div>
+
+    <script src="application.js"></script>
+</body>
+</html>

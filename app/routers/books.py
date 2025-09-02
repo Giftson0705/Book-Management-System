@@ -5,12 +5,12 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from bson import ObjectId
 from datetime import datetime
 from app.middleware.auth_middleware import get_current_user, book_helper
+from app.main import app
 
 router = APIRouter()
 
 @router.get("/books", response_model=List[Dict[str, Any]])
 async def get_all_books(current_user: dict = Depends(get_current_user)):
-    from main import app
     
     database = app.state.database
     books_collection = database.books
@@ -22,7 +22,6 @@ async def get_all_books(current_user: dict = Depends(get_current_user)):
 
 @router.get("/books/{book_id}", response_model=Dict[str, Any])
 async def get_book(book_id: str, current_user: dict = Depends(get_current_user)):
-    from main import app
     
     database = app.state.database
     books_collection = database.books
@@ -41,8 +40,6 @@ async def search_books(
     query: str = Query(..., min_length=1),
     current_user: dict = Depends(get_current_user)
 ):
-    from main import app
-    
     database = app.state.database
     books_collection = database.books
     
@@ -62,7 +59,6 @@ async def search_books(
 
 @router.post("/books/{book_id}/borrow", response_model=Dict[str, str])
 async def borrow_book(book_id: str, current_user: dict = Depends(get_current_user)):
-    from main import app
     
     database = app.state.database
     books_collection = database.books
@@ -104,7 +100,6 @@ async def borrow_book(book_id: str, current_user: dict = Depends(get_current_use
 
 @router.post("/books/{book_id}/return", response_model=Dict[str, str])
 async def return_book(book_id: str, current_user: dict = Depends(get_current_user)):
-    from main import app
     
     database = app.state.database
     books_collection = database.books
@@ -143,7 +138,7 @@ async def return_book(book_id: str, current_user: dict = Depends(get_current_use
 
 @router.get("/mybooks", response_model=List[Dict[str, Any]])
 async def get_my_books(current_user: dict = Depends(get_current_user)):
-    from main import app
+
     
     database = app.state.database
     books_collection = database.books

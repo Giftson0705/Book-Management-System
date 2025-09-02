@@ -6,13 +6,14 @@ from bson import ObjectId
 from datetime import datetime
 from app.schemas import BookCreate, BookUpdate
 from app.middleware.auth_middleware import get_current_admin
+from app.main import app
 
 router = APIRouter()
 
 @router.post("/books", response_model=Dict[str, str])
 async def create_book(book: BookCreate, current_admin: dict = Depends(get_current_admin)):
-    from main import app
-    
+    from app.main import app
+
     database = app.state.database
     books_collection = database.books
     
@@ -52,8 +53,8 @@ async def update_book(
     book_update: BookUpdate, 
     current_admin: dict = Depends(get_current_admin)
 ):
-    from main import app
-    
+    from app.main import app
+
     database = app.state.database
     books_collection = database.books
     
@@ -99,8 +100,8 @@ async def update_book(
 
 @router.delete("/books/{book_id}", response_model=Dict[str, str])
 async def delete_book(book_id: str, current_admin: dict = Depends(get_current_admin)):
-    from main import app
-    
+    from app.main import app
+
     database = app.state.database
     books_collection = database.books
     

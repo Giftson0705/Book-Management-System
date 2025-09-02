@@ -1,5 +1,3 @@
-# middleware/auth_middleware.py - Role & token validation
-
 import os
 from datetime import datetime, timedelta
 from typing import Optional
@@ -8,6 +6,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from app.schemas import TokenData
+from app.dependencies import get_database  # <-- Use new dependency
 
 SECRET_KEY = os.getenv("SECRET_KEY", "your-super-secret-key-change-in-production")
 ALGORITHM = "HS256"
@@ -42,10 +41,10 @@ async def authenticate_user(database, username: str, password: str):
         return False
     return user
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    from main import app
-    database = app.state.database
-    
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    database=Depends(get_database)  # <-- Inject database
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -73,7 +72,6 @@ async def get_current_admin(current_user: dict = Depends(get_current_user)):
         )
     return current_user
 
-# Helper functions
 def book_helper(book) -> dict:
     return {
         "id": str(book["_id"]),

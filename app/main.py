@@ -1,5 +1,3 @@
-# main.py - FastAPI entrypoint
-
 import os
 from datetime import datetime
 from fastapi import FastAPI
@@ -7,52 +5,41 @@ from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from passlib.context import CryptContext
 
-# Import routers
 from app.routers import auth, books, admin_books, admin_users
 
-
-# Environment Configuration
 SECRET_KEY = os.getenv("SECRET_KEY", "your-super-secret-key-change-in-production")
 MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
 DATABASE_NAME = os.getenv("DATABASE_NAME", "bookstore")
 
-# Initialize FastAPI
 app = FastAPI(
     title="Book Management System",
     description="A complete book management system with user authentication and role-based access",
     version="1.0.0"
 )
 
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers with exact endpoints from specification
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(books.router, prefix="/api/v1", tags=["Books - User"])
 app.include_router(admin_books.router, prefix="/api/v1/admin", tags=["Books - Admin"])
 app.include_router(admin_users.router, prefix="/api/v1/admin", tags=["Users - Admin"])
 
-# MongoDB setup
 client = AsyncIOMotorClient(MONGODB_URL)
 database = client[DATABASE_NAME]
-
-# Make database accessible to other modules
 app.state.database = database
 
 @app.on_event("startup")
 async def startup_event():
-    """Create default admin user and database indexes on startup"""
     users_collection = database.users
     books_collection = database.books
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     
-    # Create default admin user if no admin exists
     admin_exists = await users_collection.find_one({"role": "admin"})
     if not admin_exists:
         admin_user = {
@@ -70,7 +57,6 @@ async def startup_event():
         print("   Password: admin123")
         print("   Please change the password after first login!")
     
-    # Create database indexes for better performance
     try:
         await users_collection.create_index("username", unique=True)
         await users_collection.create_index("email", unique=True)
@@ -86,14 +72,11 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Close database connection on shutdown"""
     client.close()
 
-# Health check endpoint
 @app.get("/api/v1/health")
 async def health_check():
     try:
-        # Test database connection
         await database.command("ping")
         db_status = "connected"
     except Exception:
@@ -106,7 +89,6 @@ async def health_check():
         "version": "1.0.0"
     }
 
-# Root endpoint
 @app.get("/")
 async def root():
     return {
