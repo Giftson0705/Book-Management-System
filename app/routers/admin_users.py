@@ -1,22 +1,41 @@
-# routers/admin_users.py - Admin user management routes
+# # routers/admin_users.py - Admin user management routes
 
-from typing import List, Dict, Any
-from fastapi import APIRouter, HTTPException, Depends, status
-from bson import ObjectId
-from datetime import datetime
+# from typing import List, Dict, Any
+# from fastapi import APIRouter, HTTPException, Depends, status
+# from bson import ObjectId
+# from datetime import datetime
+# from app.middleware.auth_middleware import get_current_admin, user_helper
+# from app.main import app
+
+# router = APIRouter()
+
+# @router.get("/users", response_model=List[Dict[str, Any]])
+# async def get_all_users(current_admin: dict = Depends(get_current_admin)):
+    
+#     database = app.state.database
+#     users_collection = database.users
+    
+#     users = []
+#     async for user in users_collection.find({}, {"password": 0}):  # Exclude password
+#         users.append(user_helper(user))
+#     return users
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from app.middleware.auth_middleware import get_current_admin, user_helper
-from app.main import app
+from app.dependencies import get_database
+from typing import Dict, Any
+from bson import ObjectId   
 
 router = APIRouter()
 
-@router.get("/users", response_model=List[Dict[str, Any]])
-async def get_all_users(current_admin: dict = Depends(get_current_admin)):
-    
-    database = app.state.database
-    users_collection = database.users
-    
+@router.get("/users")
+async def admin_list_users(
+    database=Depends(get_database),
+    current_admin=Depends(get_current_admin)
+):
+    users_cursor = database.users.find()
     users = []
-    async for user in users_collection.find({}, {"password": 0}):  # Exclude password
+    async for user in users_cursor:
         users.append(user_helper(user))
     return users
 

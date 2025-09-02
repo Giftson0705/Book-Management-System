@@ -39,7 +39,7 @@ async def startup_event():
     users_collection = database.users
     books_collection = database.books
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    
+
     admin_exists = await users_collection.find_one({"role": "admin"})
     if not admin_exists:
         admin_user = {
@@ -56,14 +56,14 @@ async def startup_event():
         print("   Username: admin")
         print("   Password: admin123")
         print("   Please change the password after first login!")
-    
+
     try:
         await users_collection.create_index("username", unique=True)
         await users_collection.create_index("email", unique=True)
         await books_collection.create_index("isbn", unique=True)
         await books_collection.create_index([
-            ("title", "text"), 
-            ("author", "text"), 
+            ("title", "text"),
+            ("author", "text"),
             ("genre", "text")
         ])
         print("✅ Database indexes created successfully")
@@ -81,7 +81,7 @@ async def health_check():
         db_status = "connected"
     except Exception:
         db_status = "disconnected"
-    
+
     return {
         "status": "healthy",
         "database": db_status,

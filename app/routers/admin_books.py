@@ -1,14 +1,34 @@
-# routers/admin_books.py - Admin book management routes
+# # routers/admin_books.py - Admin book management routes
 
-from typing import Dict
-from fastapi import APIRouter, HTTPException, Depends, status
+# from typing import Dict
+# from fastapi import APIRouter, HTTPException, Depends, status
+# from bson import ObjectId
+# from datetime import datetime
+# from app.schemas import BookCreate, BookUpdate
+# from app.middleware.auth_middleware import get_current_admin
+# from app.main import app
+
+# router = APIRouter()
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from app.middleware.auth_middleware import get_current_admin, book_helper
+from app.dependencies import get_database
+from typing import Dict, Any
 from bson import ObjectId
-from datetime import datetime
 from app.schemas import BookCreate, BookUpdate
-from app.middleware.auth_middleware import get_current_admin
-from app.main import app
 
 router = APIRouter()
+
+@router.get("/books")
+async def admin_list_books(
+    database=Depends(get_database),
+    current_admin=Depends(get_current_admin)
+):
+    books_cursor = database.books.find()
+    books = []
+    async for book in books_cursor:
+        books.append(book_helper(book))
+    return books
 
 @router.post("/books", response_model=Dict[str, str])
 async def create_book(book: BookCreate, current_admin: dict = Depends(get_current_admin)):

@@ -6,7 +6,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from app.schemas import TokenData
-from app.dependencies import get_database  # <-- Use new dependency
+from app.dependencies import get_database
 
 SECRET_KEY = os.getenv("SECRET_KEY", "your-super-secret-key-change-in-production")
 ALGORITHM = "HS256"
@@ -23,17 +23,13 @@ def get_password_hash(password):
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 async def get_user_from_db(database, username: str):
-    user = await database.users.find_one({"username": username})
-    return user
+    return await database.users.find_one({"username": username})
 
 async def authenticate_user(database, username: str, password: str):
     user = await get_user_from_db(database, username)
@@ -43,7 +39,7 @@ async def authenticate_user(database, username: str, password: str):
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    database=Depends(get_database)  # <-- Inject database
+    database=Depends(get_database)
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -58,7 +54,7 @@ async def get_current_user(
         token_data = TokenData(username=username, role=payload.get("role"))
     except JWTError:
         raise credentials_exception
-    
+
     user = await get_user_from_db(database, username)
     if user is None:
         raise credentials_exception

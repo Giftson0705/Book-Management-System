@@ -1,24 +1,20 @@
-# routers/books.py - User book routes
-
-from typing import List, Dict, Any
-from fastapi import APIRouter, HTTPException, Depends, Query
-from bson import ObjectId
-from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, status
 from app.middleware.auth_middleware import get_current_user, book_helper
-from app.main import app
+from app.dependencies import get_database
+from typing import Dict, Any, List
+from bson import ObjectId
+from fastapi import Query
 
 router = APIRouter()
 
-@router.get("/books", response_model=List[Dict[str, Any]])
-async def get_all_books(current_user: dict = Depends(get_current_user)):
-    
-    database = app.state.database
-    books_collection = database.books
-    
+@router.get("/books")
+async def list_books(database=Depends(get_database)):
+    books_cursor = database.books.find()
     books = []
-    async for book in books_collection.find({}):
+    async for book in books_cursor:
         books.append(book_helper(book))
     return books
+
 
 @router.get("/books/{book_id}", response_model=Dict[str, Any])
 async def get_book(book_id: str, current_user: dict = Depends(get_current_user)):
@@ -136,21 +132,19 @@ async def return_book(book_id: str, current_user: dict = Depends(get_current_use
     
     return {"message": "Book returned successfully"}
 
-@router.get("/mybooks", response_model=List[Dict[str, Any]])
-async def get_my_books(current_user: dict = Depends(get_current_user)):
-
-    
-    database = app.state.database
-    books_collection = database.books
-    
-    borrowed_book_ids = current_user.get("borrowed_books", [])
-    if not borrowed_book_ids:
-        return []
-    
-    # Convert string IDs to ObjectIds
-    object_ids = [ObjectId(book_id) for book_id in borrowed_book_ids if ObjectId.is_valid(book_id)]
-    
+@router.get("/mybooks")
+async def get_my_books(
+    current_user: dict = Depends(get_current_user),
+    database=Depends(get_database)
+):
+    # Your logic here, e.g.
+    user_books = current_user.get("borrowed_books", [])
     books = []
-    async for book in books_collection.find({"_id": {"$in": object_ids}}):
-        books.append(book_helper(book))
+    for book_id in user_books:
+        book = await database.books.find_one({"_id": book_id})
+        if book:
+            books.append(book_helper(book))
     return books
+    
+
+
