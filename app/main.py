@@ -22,6 +22,10 @@ app.add_middleware(
     allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
 )
 
+@app.get("/")
+async def root():
+    return {"message": "Welcome to the Book Management system"}
+
 @app.on_event("startup")
 async def startup():
     client = AsyncIOMotorClient(MONGODB_URL)
