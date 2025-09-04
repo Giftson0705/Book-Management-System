@@ -1,161 +1,109 @@
-# routers/books.py - User book routes
-
-from typing import List, Dict, Any
-from fastapi import APIRouter, HTTPException, Depends, Query
+# app/routers/books.py
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from typing import List
 from bson import ObjectId
-from datetime import datetime
-from middleware.auth_middleware import get_current_user, book_helper
 
-router = APIRouter()
+from app.dependencies import books_col, users_col, oid_to_str, to_object_id
+from app.middleware.auth_middleware import get_current_user
+from app.schemas import BookOut, Message
 
-@router.get("/books", response_model=List[Dict[str, Any]])
-async def get_all_books(current_user: dict = Depends(get_current_user)):
-    from main import app
-    
-    database = app.state.database
-    books_collection = database.books
-    
-    books = []
-    async for book in books_collection.find({}):
-        books.append(book_helper(book))
+books_router = APIRouter(prefix="/api/v1", tags=["Books - User"])
+
+# -------------------------------
+# List all books
+# -------------------------------
+@books_router.get("/books", response_model=List[BookOut])
+async def list_books():
+    cursor = books_col.find({})
+    books = [oid_to_str(doc) async for doc in cursor]
     return books
 
-@router.get("/books/{book_id}", response_model=Dict[str, Any])
-async def get_book(book_id: str, current_user: dict = Depends(get_current_user)):
-    from main import app
-    
-    database = app.state.database
-    books_collection = database.books
-    
-    if not ObjectId.is_valid(book_id):
-        raise HTTPException(status_code=400, detail="Invalid book ID")
-    
-    book = await books_collection.find_one({"_id": ObjectId(book_id)})
+# -------------------------------
+# Get book by ID
+# -------------------------------
+@books_router.get("/books/{book_id}", response_model=BookOut)
+async def get_book(book_id: str):
+    book = await books_col.find_one({"_id": to_object_id(book_id)})
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
-    
-    return book_helper(book)
+    return oid_to_str(book)
 
-@router.get("/books/search", response_model=List[Dict[str, Any]])
-async def search_books(
-    query: str = Query(..., min_length=1),
-    current_user: dict = Depends(get_current_user)
-):
-    from main import app
-    
-    database = app.state.database
-    books_collection = database.books
-    
-    # Search in title, author, and genre
-    search_filter = {
+# -------------------------------
+# Search books
+# -------------------------------
+@books_router.get("/books/search", response_model=List[BookOut])
+async def search_books(query: str = Query(..., min_length=1)):
+    cursor = books_col.find({
         "$or": [
             {"title": {"$regex": query, "$options": "i"}},
             {"author": {"$regex": query, "$options": "i"}},
-            {"genre": {"$regex": query, "$options": "i"}}
+            {"genre": {"$regex": query, "$options": "i"}},
         ]
-    }
-    
-    books = []
-    async for book in books_collection.find(search_filter):
-        books.append(book_helper(book))
+    })
+    books = [oid_to_str(doc) async for doc in cursor]
     return books
 
-@router.post("/books/{book_id}/borrow", response_model=Dict[str, str])
-async def borrow_book(book_id: str, current_user: dict = Depends(get_current_user)):
-    from main import app
-    
-    database = app.state.database
-    books_collection = database.books
-    users_collection = database.users
-    
-    if not ObjectId.is_valid(book_id):
-        raise HTTPException(status_code=400, detail="Invalid book ID")
-    
-    # Check if book exists and is available
-    book = await books_collection.find_one({"_id": ObjectId(book_id)})
+# -------------------------------
+# Borrow a book (users only)
+# -------------------------------
+@books_router.post("/books/{book_id}/borrow", response_model=Message)
+async def borrow_book(book_id: str, current_user=Depends(get_current_user)):
+    # 🚫 Prevent admins from borrowing
+    if current_user["role"] == "admin":
+        raise HTTPException(status_code=403, detail="Admins cannot borrow books")
+
+    book = await books_col.find_one({"_id": to_object_id(book_id)})
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
-    
-    if book["available_copies"] <= 0:
-        raise HTTPException(status_code=400, detail="Book not available")
-    
-    # Check if user already borrowed this book
-    user_id = str(current_user["_id"])
-    if user_id in book.get("borrowed_by", []):
-        raise HTTPException(status_code=400, detail="You have already borrowed this book")
-    
-    # Update book: decrease available copies and add user to borrowed_by
-    await books_collection.update_one(
-        {"_id": ObjectId(book_id)},
-        {
-            "$inc": {"available_copies": -1},
-            "$push": {"borrowed_by": user_id},
-            "$set": {"updated_at": datetime.utcnow()}
-        }
-    )
-    
-    # Update user: add book to borrowed_books
-    await users_collection.update_one(
-        {"_id": current_user["_id"]},
-        {"$push": {"borrowed_books": book_id}}
-    )
-    
-    return {"message": "Book borrowed successfully"}
+    if not book.get("available", True):
+        raise HTTPException(status_code=400, detail="Book is already borrowed")
 
-@router.post("/books/{book_id}/return", response_model=Dict[str, str])
-async def return_book(book_id: str, current_user: dict = Depends(get_current_user)):
-    from main import app
-    
-    database = app.state.database
-    books_collection = database.books
-    users_collection = database.users
-    
-    if not ObjectId.is_valid(book_id):
-        raise HTTPException(status_code=400, detail="Invalid book ID")
-    
-    # Check if book exists
-    book = await books_collection.find_one({"_id": ObjectId(book_id)})
+    # Update book availability
+    await books_col.update_one({"_id": book["_id"]}, {"$set": {"available": False}})
+    # Add to user's borrowed list
+    await users_col.update_one(
+        {"_id": to_object_id(current_user["id"])},
+        {"$addToSet": {"borrowed_books": str(book["_id"])}}
+    )
+    return Message(detail="Book borrowed successfully")
+
+
+# -------------------------------
+# Return a book (users only)
+# -------------------------------
+@books_router.post("/books/{book_id}/return", response_model=Message)
+async def return_book(book_id: str, current_user=Depends(get_current_user)):
+    # 🚫 Prevent admins from returning
+    if current_user["role"] == "admin":
+        raise HTTPException(status_code=403, detail="Admins cannot return books")
+
+    book = await books_col.find_one({"_id": to_object_id(book_id)})
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
-    
-    # Check if user has borrowed this book
-    user_id = str(current_user["_id"])
-    if user_id not in book.get("borrowed_by", []):
-        raise HTTPException(status_code=400, detail="You haven't borrowed this book")
-    
-    # Update book: increase available copies and remove user from borrowed_by
-    await books_collection.update_one(
-        {"_id": ObjectId(book_id)},
-        {
-            "$inc": {"available_copies": 1},
-            "$pull": {"borrowed_by": user_id},
-            "$set": {"updated_at": datetime.utcnow()}
-        }
-    )
-    
-    # Update user: remove book from borrowed_books
-    await users_collection.update_one(
-        {"_id": current_user["_id"]},
-        {"$pull": {"borrowed_books": book_id}}
-    )
-    
-    return {"message": "Book returned successfully"}
 
-@router.get("/mybooks", response_model=List[Dict[str, Any]])
-async def get_my_books(current_user: dict = Depends(get_current_user)):
-    from main import app
-    
-    database = app.state.database
-    books_collection = database.books
-    
-    borrowed_book_ids = current_user.get("borrowed_books", [])
-    if not borrowed_book_ids:
+    # Check if user actually borrowed it
+    if str(book["_id"]) not in current_user.get("borrowed_books", []):
+        raise HTTPException(status_code=400, detail="You haven’t borrowed this book")
+
+    # Update book availability
+    await books_col.update_one({"_id": book["_id"]}, {"$set": {"available": True}})
+    # Remove from user's borrowed list
+    await users_col.update_one(
+        {"_id": to_object_id(current_user["id"])},
+        {"$pull": {"borrowed_books": str(book["_id"])}}
+    )
+    return Message(detail="Book returned successfully")
+
+
+# -------------------------------
+# View my borrowed books
+# -------------------------------
+@books_router.get("/mybooks", response_model=List[BookOut])
+async def my_books(current_user=Depends(get_current_user)):
+    borrowed_ids = current_user.get("borrowed_books", [])
+    if not borrowed_ids:
         return []
-    
-    # Convert string IDs to ObjectIds
-    object_ids = [ObjectId(book_id) for book_id in borrowed_book_ids if ObjectId.is_valid(book_id)]
-    
-    books = []
-    async for book in books_collection.find({"_id": {"$in": object_ids}}):
-        books.append(book_helper(book))
+
+    cursor = books_col.find({"_id": {"$in": [to_object_id(bid) for bid in borrowed_ids]}})
+    books = [oid_to_str(doc) async for doc in cursor]
     return books

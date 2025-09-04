@@ -1,101 +1,38 @@
-# middleware/auth_middleware.py - Role & token validation
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError
+from typing import Dict, Any
 
-import os
-from datetime import datetime, timedelta
-from typing import Optional
-from fastapi import HTTPException, Depends, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-from schemas import TokenData
+from app.dependencies import decode_token, users_col, oid_to_str, to_object_id  # <-- add to_object_id
+from app.schemas import UserOut
 
-SECRET_KEY = os.getenv("SECRET_KEY", "your-super-secret-key-change-in-production")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-security = HTTPBearer()
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-async def get_user_from_db(database, username: str):
-    user = await database.users.find_one({"username": username})
-    return user
-
-async def authenticate_user(database, username: str, password: str):
-    user = await get_user_from_db(database, username)
-    if not user or not verify_password(password, user["password"]):
-        return False
-    return user
-
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    from main import app
-    database = app.state.database
-    
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> Dict[str, Any]:
     try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-        token_data = TokenData(username=username, role=payload.get("role"))
+        payload = decode_token(token)
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     except JWTError:
-        raise credentials_exception
-    
-    user = await get_user_from_db(database, username)
-    if user is None:
-        raise credentials_exception
-    return user
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
-async def get_current_admin(current_user: dict = Depends(get_current_user)):
-    if current_user["role"] != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
-        )
-    return current_user
+    # ✅ Convert string back to ObjectId
+    user = await users_col.find_one({"_id": to_object_id(user_id)})
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
-# Helper functions
-def book_helper(book) -> dict:
-    return {
-        "id": str(book["_id"]),
-        "title": book["title"],
-        "author": book["author"],
-        "genre": book["genre"],
-        "isbn": book["isbn"],
-        "description": book.get("description", ""),
-        "total_copies": book["total_copies"],
-        "available_copies": book["available_copies"],
-        "borrowed_by": book.get("borrowed_by", []),
-        "created_at": book["created_at"],
-        "updated_at": book["updated_at"]
-    }
+    return oid_to_str(user)
 
-def user_helper(user) -> dict:
-    return {
-        "id": str(user["_id"]),
-        "username": user["username"],
-        "email": user["email"],
-        "full_name": user["full_name"],
-        "role": user["role"],
-        "borrowed_books": user.get("borrowed_books", []),
-        "created_at": user["created_at"]
-    }
+
+
+def require_role(required_role: str):
+    """Dependency to enforce role"""
+    async def role_checker(current_user: Dict[str, Any] = Depends(get_current_user)):
+        if current_user["role"] != required_role:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Requires {required_role} role"
+            )
+        return current_user
+    return role_checker
