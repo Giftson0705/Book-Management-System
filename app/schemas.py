@@ -17,13 +17,23 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
+# # ---------- User ----------
+# class UserOut(BaseModel):
+#     id: str
+#     username: str
+#     email: Optional[EmailStr] = None
+#     role: str
+#     borrowed_books: List[str] = []
+
 # ---------- User ----------
 class UserOut(BaseModel):
-    id: str
+    user_id: str
     username: str
     email: Optional[EmailStr] = None
     role: str
     borrowed_books: List[str] = []
+
+
 
 # ---------- Books ----------
 class BookBase(BaseModel):
