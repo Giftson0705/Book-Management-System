@@ -1,6 +1,73 @@
+// const API_BASE = "http://127.0.0.1:60619/api/v1";
+
+// // ---------- SIGNUP ----------
+// document.getElementById("signupForm").addEventListener("submit", async (e) => {
+//   e.preventDefault();
+
+//   const username = document.getElementById("username").value.trim();
+//   const email = document.getElementById("email").value.trim();
+//   const password = document.getElementById("password").value.trim();
+
+//   try {
+//     const res = await fetch(`${API_BASE}/auth/signup`, {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({ username, email, password })
+//     });
+
+//     const data = await res.json();
+
+//     if (res.ok) {
+//       alert("Signup successful ✅ Please login.");
+//       window.location.href = "login.html";
+//     } else {
+//       document.getElementById("message").innerText = data.detail || "Signup failed ❌";
+//     }
+//   } catch (err) {
+//     document.getElementById("message").innerText = "Error connecting to server ❌";
+//   }
+// });
+
+
+// sept 8th update
+// const API_BASE = "http://127.0.0.1:60619/api/v1";
+
+// // ---------- SIGNUP ----------
+// document.getElementById("signupForm").addEventListener("submit", async (e) => {
+//   e.preventDefault();
+
+//   const username = document.getElementById("username").value.trim();
+//   const email = document.getElementById("email").value.trim();
+//   const password = document.getElementById("password").value.trim();
+
+//   // Always default to "user" unless you’re creating admins manually
+//   const role = "user";
+
+//   try {
+//     const res = await fetch(`${API_BASE}/auth/signup`, {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({ username, email, password, role })
+//     });
+
+//     const data = await res.json();
+
+//     if (res.ok) {
+//       alert("Signup successful ✅ Please login.");
+//       window.location.href = "login.html";
+//     } else {
+//       document.getElementById("message").innerText =
+//         data.detail || "Signup failed ❌";
+//     }
+//   } catch (err) {
+//     document.getElementById("message").innerText =
+//       "Error connecting to server ❌";
+//   }
+// });
+
+// sept 9th update
 const API_BASE = "http://127.0.0.1:60619/api/v1";
 
-// ---------- SIGNUP ----------
 document.getElementById("signupForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -12,18 +79,22 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
     const res = await fetch(`${API_BASE}/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, email, password })
+      body: JSON.stringify({ username, email, password, role: "user" })
     });
 
-    const data = await res.json();
+    // Try to parse JSON, but guard bad gateways
+    let data = null;
+    try { data = await res.json(); } catch {}
 
     if (res.ok) {
       alert("Signup successful ✅ Please login.");
       window.location.href = "login.html";
     } else {
-      document.getElementById("message").innerText = data.detail || "Signup failed ❌";
+      document.getElementById("message").innerText =
+        (data && (data.detail || data.message)) || `Signup failed (${res.status}) ❌`;
     }
   } catch (err) {
     document.getElementById("message").innerText = "Error connecting to server ❌";
   }
 });
+
