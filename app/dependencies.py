@@ -166,3 +166,4 @@ async def check_database_health() -> Dict[str, str]:
         return {"status": "healthy", "database": MONGO_DB_NAME}
     except Exception as e:
         return {"status": "unhealthy", "error": str(e)}
+
