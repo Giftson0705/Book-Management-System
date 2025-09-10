@@ -53,7 +53,7 @@
 
 const API_BASE = "http://127.0.0.1:60619/api/v1";
 
-document.getElementById("loginForm").addEventListener("submit", async (e) => {
+document.getElementById("login-form").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const username = document.getElementById("username").value.trim();

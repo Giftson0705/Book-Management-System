@@ -43,29 +43,39 @@
 #     books = [oid_to_str(doc) async for doc in cursor]
 #     return books
 
+from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import List
+
+from app.dependencies import books_col, users_col, oid_to_str, to_object_id
+from app.middleware.auth_middleware import get_current_user
+from app.schemas import BookOut, Message
+
+books_router = APIRouter(prefix="/api/v1", tags=["Books - User"])
+
+
 # # -------------------------------
 # # Borrow a book (users only)
 # # -------------------------------
-# @books_router.post("/books/{book_id}/borrow", response_model=Message)
-# async def borrow_book(book_id: str, current_user=Depends(get_current_user)):
-#     # 🚫 Prevent admins from borrowing
-#     if current_user["role"] == "admin":
-#         raise HTTPException(status_code=403, detail="Admins cannot borrow books")
+@books_router.post("/books/{book_id}/borrow", response_model=Message)
+async def borrow_book(book_id: str, current_user=Depends(get_current_user)):
+    # 🚫 Prevent admins from borrowing
+    if current_user["role"] == "admin":
+        raise HTTPException(status_code=403, detail="Admins cannot borrow books")
 
-#     book = await books_col.find_one({"_id": to_object_id(book_id)})
-#     if not book:
-#         raise HTTPException(status_code=404, detail="Book not found")
-#     if not book.get("available", True):
-#         raise HTTPException(status_code=400, detail="Book is already borrowed")
+    book = await books_col.find_one({"_id": to_object_id(book_id)})
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    if not book.get("available", True):
+        raise HTTPException(status_code=400, detail="Book is already borrowed")
 
-#     # Update book availability
-#     await books_col.update_one({"_id": book["_id"]}, {"$set": {"available": False}})
-#     # Add to user's borrowed list
-#     await users_col.update_one(
-#         {"_id": to_object_id(current_user["id"])},
-#         {"$addToSet": {"borrowed_books": str(book["_id"])}}
-#     )
-#     return Message(detail="Book borrowed successfully")
+    # Update book availability
+    await books_col.update_one({"_id": book["_id"]}, {"$set": {"available": False}})
+    # Add to user's borrowed list
+    await users_col.update_one(
+        {"_id": to_object_id(current_user["id"])},
+        {"$addToSet": {"borrowed_books": str(book["_id"])}}
+    )
+    return Message(detail="Book borrowed successfully")
 
 
 # # -------------------------------
@@ -141,45 +151,81 @@ async def get_book(book_id: str):
         raise HTTPException(status_code=404, detail="Book not found")
     return oid_to_str(book)
 
-# -------------------------------
-# Search books
-# -------------------------------
-@books_router.get("/books/search", response_model=List[BookOut])
-async def search_books(query: str):
-    cursor = books_col.find({
-        "$or": [
-            {"title": {"$regex": query, "$options": "i"}},
-            {"author": {"$regex": query, "$options": "i"}},
-            {"genre": {"$regex": query, "$options": "i"}},
-        ]
-    })
-    books = [oid_to_str(doc) async for doc in cursor]
-    return books
+# # -------------------------------
+# # Search books
+# # -------------------------------
+# # @books_router.get("/books/search", response_model=List[BookOut])
+# # async def search_books(query: str):
+# #     cursor = books_col.find({
+# #         "$or": [
+# #             {"title": {"$regex": query, "$options": "i"}},
+# #             {"author": {"$regex": query, "$options": "i"}},
+# #             {"genre": {"$regex": query, "$options": "i"}},
+# #         ]
+# #     })
+# #     books = [oid_to_str(doc) async for doc in cursor]
+# #     return books
+
+# @books_router.get("/search")
+# async def search_books(query: str):
+#     cursor = books_col.find({
+#         "$or": [
+#             {"title": {"$regex": query, "$options": "i"}},
+#             {"author": {"$regex": query, "$options": "i"}},
+#             {"genre": {"$regex": query, "$options": "i"}},
+#         ]
+#     })
+#     results = [oid_to_str(doc) async for doc in cursor]
+#     return results
+# all these are replaced by search feature in frontend
 
 # -------------------------------
 # Borrow a book (users only)
 # -------------------------------
-@books_router.post("/books/{book_id}/borrow", response_model=Message)
-async def borrow_book(book_id: str, current_user=Depends(get_current_user)):
-    # 🚫 Prevent admins from borrowing
-    if current_user["role"] == "admin":
-        raise HTTPException(status_code=403, detail="Admins cannot borrow books")
+# @books_router.post("/books/{book_id}/borrow", response_model=Message)
+# async def borrow_book(book_id: str, current_user=Depends(get_current_user)):
+#     # 🚫 Prevent admins from borrowing
+#     if current_user["role"] == "admin":
+#         raise HTTPException(status_code=403, detail="Admins cannot borrow books")
 
-    book = await books_col.find_one({"_id": to_object_id(book_id)})
-    if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
-    if not book.get("available", True):
-        raise HTTPException(status_code=400, detail="Book is already borrowed")
+#     book = await books_col.find_one({"_id": to_object_id(book_id)})
+#     if not book:
+#         raise HTTPException(status_code=404, detail="Book not found")
+#     if not book.get("available", True):
+#         raise HTTPException(status_code=400, detail="Book is already borrowed")
 
-    # Update book availability
-    await books_col.update_one({"_id": book["_id"]}, {"$set": {"available": False}})
+#     # Update book availability
+#     await books_col.update_one({"_id": book["_id"]}, {"$set": {"available": False}})
 
-    # ✅ Add book to user's borrowed list using user_id
-    await users_col.update_one(
-        {"user_id": current_user["user_id"]},
-        {"$addToSet": {"borrowed_books": str(book["_id"])}}
-    )
-    return Message(detail="Book borrowed successfully")
+#     # ✅ Add book to user's borrowed list using user_id
+#     await users_col.update_one(
+#         {"user_id": current_user["user_id"]},
+#         {"$addToSet": {"borrowed_books": str(book["_id"])}}
+#     )
+#     return Message(detail="Book borrowed successfully")
+
+# app/routers/books.py
+# @books_router.post("/{book_id}/borrow", response_model=Message)
+# async def borrow_book(book_id: str, current_user=Depends(get_current_user)):
+#     book = await books_col.find_one({"_id": to_object_id(book_id)})
+#     if not book:
+#         raise HTTPException(status_code=404, detail="Book not found")
+#     if not book.get("available", True):
+#         raise HTTPException(status_code=400, detail="Book is already borrowed")
+
+#     # Update book availability
+#     await books_col.update_one({"_id": book["_id"]}, {"$set": {"available": False}})
+
+#     # ✅ Fix: support both UUID user_id and legacy Mongo id
+#     uid = current_user.get("user_id") or current_user.get("id")
+
+#     await users_col.update_one(
+#         {"$or": [{"user_id": uid}, {"_id": to_object_id(uid)}]},
+#         {"$addToSet": {"borrowed_books": str(book["_id"])}}
+#     )
+
+#     return Message(detail="Book borrowed successfully")
+
 
 # -------------------------------
 # Return a book (users only)

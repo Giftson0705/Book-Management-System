@@ -172,7 +172,7 @@
 //   location.href = "login.html";
 // });
 
-// // Initial load
+// Initial load
 // fetchBooks();
 
 // sept 9th update
@@ -204,13 +204,15 @@ function renderBooks(books) {
       <p><strong>Status:</strong> ${book.available ? "Available ✅" : "Borrowed ❌"}</p>
     `;
 
-    if (role === "user") {
-      if (book.available) {
-        div.innerHTML += `<button onclick="borrowBook('${book.id}')">Borrow</button>`;
-      } else {
-        div.innerHTML += `<button onclick="returnBook('${book.id}')">Return</button>`;
-      }
-    }
+    const userBorrowed = JSON.parse(localStorage.getItem("borrowed_books") || "[]");
+
+if (role === "user") {
+  if (book.available) {
+    div.innerHTML += `<button onclick="borrowBook('${book.id}')">Borrow</button>`;
+  } else if (userBorrowed.includes(book.id)) {
+    div.innerHTML += `<button onclick="returnBook('${book.id}')">Return</button>`;
+  }
+}
 
     booksList.appendChild(div);
   });

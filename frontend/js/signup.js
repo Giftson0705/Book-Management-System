@@ -68,7 +68,7 @@
 // sept 9th update
 const API_BASE = "http://127.0.0.1:60619/api/v1";
 
-document.getElementById("signupForm").addEventListener("submit", async (e) => {
+document.getElementById("signup-form").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const username = document.getElementById("username").value.trim();
