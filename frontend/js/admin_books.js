@@ -352,38 +352,5 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
 // Load books on page load
 fetchBooks();
 
-////today's code with updates
 
-// // frontend/js/admin_books.js
-// const API_BASE = "http://127.0.0.1:60619/api/v1/admin/books";
-// const token = localStorage.getItem("token");
-
-// if (!token) {
-//   window.location.href = "login.html";
-// }
-
-// const booksList = document.getElementById("admin-books-list");
-// const addBookForm = document.getElementById("add-book-form");
-
-// // ---------- Fetch all books ----------
-// async function fetchBooks() {
-//   console.log("Fetching admin books from:", API_BASE);
-
-//   const res = await fetch(API_BASE, {
-//     headers: { Authorization: `Bearer ${token}` }
-//   });
-
-//   console.log("Response status:", res.status);
-
-//   if (!res.ok) {
-//     const err = await res.text();
-//     console.error("Error fetching books:", err);
-//     alert("Error: " + err);
-//     return;
-//   }
-
-//   const books = await res.json();
-//   console.log("Books received:", books);
-//   renderBooks(books);
-// }
 

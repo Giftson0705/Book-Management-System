@@ -316,11 +316,11 @@
 // fetchUsers();
 
 //sept 9th code
-const API_BASE = "http://127.0.0.1:60619/api/v1";
+// const API_BASE = "http://127.0.0.1:60619/api/v1";
 const ADMIN_USERS_API = `${API_BASE}/admin/users`;
 const token = localStorage.getItem("token");
 
-if (!token) window.location.href = "login.html";
+if (!token) window.lsocation.href = "login.html";
 
 const usersList = document.getElementById("admin-users-list");
 
@@ -393,7 +393,7 @@ async function deleteUser(userId) {
   }
 }
 
-document.getElementById("logoutBtn")?.addEventListener("click", () => {
+document.getElementById("logout-btn")?.addEventListener("click", () => {
   localStorage.clear();
   window.location.href = "login.html";
 });

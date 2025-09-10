@@ -369,6 +369,7 @@
 #         raise HTTPException(status_code=404, detail="User not found")
 
 #     return {"detail": "User deleted successfully"}
+# sept 9th
 
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List

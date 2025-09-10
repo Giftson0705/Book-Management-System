@@ -105,16 +105,7 @@ app.include_router(admin_users_router)
 async def root():
     """Root endpoint - API status"""
     return {
-        "message": "📚 Book Management API is running",
-        "version": "1.0.0",
-        "status": "healthy",
-        "endpoints": {
-            "docs": "/docs",
-            "health": "/api/v1/health",
-            "auth": "/api/v1/auth/*",
-            "books": "/api/v1/books/*",
-            "admin": "/api/v1/admin/*"
-        }
+        "message": "📚 Book Management API is running"
     }
 
 # Health check endpoint (required by API testing)
