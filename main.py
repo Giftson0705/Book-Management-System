@@ -6,12 +6,12 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 import uuid
 
-from app.routers.auth import auth_router
-from app.routers.books import books_router
-from app.routers.admin_books import admin_books_router
-from app.routers.admin_users import admin_users_router
-from app.dependencies import check_database_health, users_col, get_password_hash
-from app.schemas import HealthResponse
+from routers.auth import auth_router
+from routers.books import books_router
+from routers.admin_books import admin_books_router
+from routers.admin_users import admin_users_router
+from dependencies import check_database_health, users_col, get_password_hash
+from schemas import HealthResponse
 
 # Create default admin user on startup
 @asynccontextmanager

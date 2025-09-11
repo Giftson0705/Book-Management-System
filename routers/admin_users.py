@@ -3,9 +3,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 
-from app.dependencies import users_col, oid_to_str, to_object_id
-from app.middleware.auth_middleware import require_role
-from app.schemas import UserOut, Message, UserRoleUpdate
+from dependencies import users_col, oid_to_str, to_object_id
+from middleware.auth_middleware import require_role
+from schemas import UserOut, Message, UserRoleUpdate
 
 admin_users_router = APIRouter(
     prefix="/api/v1/admin/users",

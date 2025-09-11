@@ -1,11 +1,11 @@
 #sept 9th update 
 from fastapi import APIRouter, HTTPException, status, Depends
-from app.dependencies import (
+from dependencies import (
     users_col, get_password_hash, verify_password, create_access_token,
     oid_to_str
 )
-from app.schemas import SignupRequest, LoginRequest, UserOut, TokenResponse
-from app.middleware.auth_middleware import get_current_user
+from schemas import SignupRequest, LoginRequest, UserOut, TokenResponse
+from middleware.auth_middleware import get_current_user
 import uuid
 
 auth_router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
