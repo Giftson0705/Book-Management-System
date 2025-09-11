@@ -14,3 +14,4 @@ PyJWT>=2.8
 python-dotenv>=1.0
 email-validator>=2.1
 gunicorn
+python-jose>=3.3.0
