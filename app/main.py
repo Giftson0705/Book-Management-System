@@ -53,7 +53,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",     # React dev server
+        "http://localhost:3002",     # React dev server
         "http://localhost:5000",     # Alternative frontend port
         "http://127.0.0.1:5500",     # Live Server
         "http://127.0.0.1:8080",     # Alternative dev server
