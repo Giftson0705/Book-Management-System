@@ -2,9 +2,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 
-from dependencies import books_col, oid_to_str, to_object_id
-from middleware.auth_middleware import require_role
-from schemas import AdminBookCreate, BookUpdate, BookOut, Message
+from app.dependencies import books_col, oid_to_str, to_object_id
+from app.middleware.auth_middleware import require_role
+from app.schemas import AdminBookCreate, BookUpdate, BookOut, Message
 
 admin_books_router = APIRouter(
     prefix="/api/v1/admin/books",
