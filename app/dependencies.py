@@ -13,7 +13,7 @@ import jwt
 
 # --- Load env ---
 load_dotenv()
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://giftson:Samuel0705@cluster0.z9adlzj.mongodb.net/")  # replace with your Atlas URI in Render env
+MONGODB_URI = os.getenv("MONGODB_URI") # replace with your Atlas URI in Render env
 # MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "book_mgmt")
 JWT_SECRET = os.getenv("JWT_SECRET", "your-super-secret-jwt-key-change-in-production")
