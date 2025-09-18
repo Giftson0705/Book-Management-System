@@ -57,8 +57,8 @@ app.add_middleware(
         "http://localhost:3002", 
         "http://localhost:5000",     # Alternative frontend port
         "http://127.0.0.1:5500",     # Live Server
-        "https://books-management-system-01.netlify.app/",     # Alternative dev server
-        "*"  # Remove this in production and specify exact origins
+        "https://book-management-system-frontend-krk.vercel.app/",     # Alternative dev server
+          # Remove this in production and specify exact origins "*"
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
